@@ -1,0 +1,67 @@
+doctype html
+
+html
+  head
+    title Collective &mdash; #{room}
+
+    link(rel='stylesheet', href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css")
+    link(rel='stylesheet', href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css")
+    link(rel='stylesheet', href="/stylesheets/style.css")
+    script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js")
+    script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")
+
+  body
+    div#content.container-fluid
+      div.row
+        div.col-md-12
+          h1 #{room} <small>Chat Room</small>
+
+      div.row
+        div.col-md-8
+          div#messages-container
+            table#messages-table
+              tbody#messages
+
+          div.row#message-input-container
+            div &nbsp;
+            div.col-md-12
+              textarea#message-input.form-control(rows='3', placeholder='New Message')
+
+        div.col-md-4
+          div#sidebar-container
+            div.panel.panel-primary
+              div.panel-heading
+                h3.panel-title Downloads
+              ul#downloads.list-group
+
+            div.panel.panel-default
+              div.panel-heading
+                h3.panel-title Alarms
+              ul#alarms.list-group
+
+            div.panel.panel-info
+              div.panel-heading
+                h3.panel-title Users
+              ul#users.list-group
+
+
+    script.
+        $(document).ready(function() {
+            $("#content").height($(window).height());
+            var height = $(window).height() - ($("#messages").offset().top + $("#message-input-container").height());
+            $("#messages-container").height(height - 2);
+
+            $("#message-input").keypress(function(e) {
+                if(e.which == 13 && !(e.ctrlKey || e.shiftKey)) {
+                    //TODO send
+                    $(this).val('');
+                    $('#messages-container').scrollTop($('#messages-container').height());
+                    e.preventDefault();
+                }
+            });
+        });
+
+          
+
+
+

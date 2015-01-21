@@ -1,0 +1,51 @@
+.monospace {
+    font-family: monospace;
+    font-size: 90%;
+}
+
+.timestamp {
+    font-family: monospace;
+    width: 12ch;
+    
+    font-size: 90%;
+}
+
+.timestamp-col {
+    width: 12ch;
+    font-family: monospace;
+    font-size: 90%;
+    vertical-align: top;
+}
+
+.author-col {
+    width: 12ch;
+    vertical-align: top;
+}
+
+.message-col {
+    border-left: 1px solid #aaa;
+    padding-left: 10px;
+}
+
+
+#messages-table {
+    width: 100%;
+}
+
+#messages tr:hover {
+    background-color: #eee;
+}
+
+#messages {
+    width: 100%;
+}
+
+#messages-container {
+    overflow-y: auto;
+    border: 1px solid #aaa;
+}
+
+#sidebar-container {
+    overflow-y: auto;
+    
+}
