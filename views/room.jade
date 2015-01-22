@@ -2,7 +2,7 @@ doctype html
 
 html
   head
-    title Collective &mdash; #{room}
+    title Collective &mdash; #{room.name}
 
     link(rel='stylesheet', href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css")
     link(rel='stylesheet', href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css")
@@ -14,7 +14,7 @@ html
     div#content.container-fluid
       div.row
         div.col-md-12
-          h1 #{room} <small>Chat Room</small>
+          h1 #{room.name} <small>Chat Room</small>
 
       div.row
         div.col-md-8
@@ -54,8 +54,20 @@ html
             $("#message-input").keypress(function(e) {
                 if(e.which == 13 && !(e.ctrlKey || e.shiftKey)) {
                     //TODO send
+                    var text = $(this).val().trim();
+                    if(text.length) {
+                      $.ajax("/rooms/#{slug}/message", {
+                        method: 'POST',
+                        dataType: 'json',
+                        data: {
+                          author: "Adam Meily",
+                          text: text
+                        }
+                      });
+                      $('#messages-container').scrollTop($('#messages-container').height());
+                    }
                     $(this).val('');
-                    $('#messages-container').scrollTop($('#messages-container').height());
+                    
                     e.preventDefault();
                 }
             });

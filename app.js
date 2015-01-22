@@ -1,3 +1,4 @@
+var _ = require('underscore');
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -9,6 +10,15 @@ var routes = require('./routes/index');
 var room = require('./routes/room');
 
 var app = express();
+
+var config = require('./config');
+var mongoose = require('mongoose');
+
+//mongoose.connect(config.db.uri);
+
+
+
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -23,7 +33,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
-app.use('/room', room);
+
+app.use('/rooms', room);
 //app.use('/users', users);
 
 // catch 404 and forward to error handler
