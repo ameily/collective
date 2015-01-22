@@ -8,6 +8,7 @@ module.exports = {
             name: 'Test',
             description: "Room used for testing"
         }
-    ]
+    ],
+    redmine: "https://redmine"
 };
 

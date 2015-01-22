@@ -3,10 +3,11 @@ var config = require('../config');
 var _ = require('underscore');
 var moment = require('moment');
 var models = require('../models');
-
+var md = require('../markdown')
 var router = express.Router();
 
 var slugMap = {};
+var io = null;
 
 function slugify(text) {
     return text.toString().toLowerCase()
@@ -16,10 +17,6 @@ function slugify(text) {
       .replace(/^-+/, '')          // Trim - from start of text
       .replace(/-+$/, '');         // Trim - from end of text
 }
-
-_.each(config.rooms, function(room) {
-    slugMap[slugify(room.name)] = room;
-});
 
 /* GET home page. */
 router.get('/:slug', function(req, res, next) {
@@ -35,14 +32,36 @@ router.get('/:slug', function(req, res, next) {
     console.log("   Text:   " + req.body.text);
     var msg = new models.Message({
         author: req.body.author,
-        html: req.body.text,
+        html: md.render(req.body.text),
         room: req.params.slug,
         timestamp: moment().unix()
     });
 
-    //msg.save();
+    console.log("   Html:  " + msg.html);
+    //io.of('/' + slug).emit('message', msg);
+    io.sockets.in(slug).emit('message', msg);
+
+    msg.save();
 
     //TODO fire message
 });
 
-module.exports = router;
+module.exports = function(attrs) {
+  io = attrs.io;
+  _.each(config.rooms, function(room) {
+      slug = slugify(room.name);
+      slugMap[slug] = room;
+      //io.of('/' + slug).on('connection', function(socket) {
+      //  console.log("New Connection: " + slug);
+      //});
+  });
+
+  io.on('connection', function(socket) {
+    console.log("New Connection");
+    socket.on('subscribe', function(data) {
+      console.log("subscribe: " +data);
+      socket.join(data);
+    });
+  });
+  return router;
+};
