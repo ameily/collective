@@ -5,17 +5,31 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
-var routes = require('./routes/index');
-var room = require('./routes/room');
-
-var app = express();
-
+var debug = require('debug')('collective:server');
+var socket_io = require('socket.io');
+var http = require('http');
 var config = require('./config');
 var mongoose = require('mongoose');
 
+var app = express();
+var server = http.createServer(app);
+var io = require('socket.io')(server);
+
+var routes = require('./routes/index');
+var room = require('./routes/room')({
+    io: io
+});
+
+
+
 //mongoose.connect(config.db.uri);
 
+
+
+var port = process.env.PORT || '3000';
+app.set('port', port);
+
+app.locals.moment = require('moment');
 
 
 
@@ -68,5 +82,13 @@ app.use(function(err, req, res, next) {
     });
 });
 
+
+
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
 
 module.exports = app;

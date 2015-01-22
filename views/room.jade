@@ -9,6 +9,8 @@ html
     link(rel='stylesheet', href="/stylesheets/style.css")
     script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js")
     script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")
+    script(src="/socket.io/socket.io.js")
+    script(src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js")
 
   body
     div#content.container-fluid
@@ -71,6 +73,26 @@ html
                     e.preventDefault();
                 }
             });
+
+            var socket = io();
+            socket.emit('subscribe', "#{slug}");
+
+            socket.on('message', function(msg) {
+              $("#messages").append(
+                $("<tr>").append(
+                  $("<td class='timestamp-col'>").text(
+                    '[' + moment.unix(msg.timestamp).local().format("HH:mm:ss") + ']'
+                  )
+                ).append(
+                  $("<td class='author-col'>").text(
+                    msg.author
+                  )
+                ).append(
+                  $("<td class='message-col'>").html(msg.html)
+                )
+              );
+            });
+
         });
 
           
