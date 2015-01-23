@@ -30,6 +30,7 @@ var port = process.env.PORT || '3000';
 app.set('port', port);
 
 app.locals.moment = require('moment');
+app.locals.config = config;
 
 
 
