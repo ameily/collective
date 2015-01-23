@@ -59,8 +59,15 @@ module.exports = function(attrs) {
   io.on('connection', function(socket) {
     console.log("New Connection");
     socket.on('subscribe', function(data) {
-      console.log("subscribe: " +data);
-      socket.join(data);
+      socket.join(data.room);
+      socket.name = data.name;
+      io.sockets.in(data.room).emit('join', data.name);
+    }).on('disconnect', function() {
+      console.log('leave');
+      _.each(socket.rooms, function(room) {
+        console.log("left " + room);
+        io.sockets.in(room).emit('leave', socket.name);
+      });
     });
   });
   return router;
