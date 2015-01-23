@@ -5,32 +5,33 @@
 
 .timestamp {
     font-family: monospace;
-    width: 12ch;
-    
     font-size: 90%;
+    color: #222;
 }
 
-.timestamp-col {
-    width: 12ch;
-    font-family: monospace;
-    font-size: 90%;
-    vertical-align: top;
-}
-
-.author-col {
+#messages td.timestamp {
     width: 12ch;
     vertical-align: top;
 }
 
-.message-col {
+#messages td.author {
+    width: 12ch;
+    vertical-align: top;
+}
+
+#messages td.message {
     border-left: 1px solid #aaa;
     padding-left: 10px;
     vertical-align: top;
 }
 
-.message-col p {
+#messages td.message p {
     padding: 0;
     margin: 0;
+}
+
+#messages tr.system td.message, #messages tr.system td.author {
+    font-weight: bold;
 }
 
 
