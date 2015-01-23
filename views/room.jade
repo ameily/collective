@@ -49,6 +49,15 @@ html
 
     script.
         $(document).ready(function() {
+            $("#messages").on('click', "a.issue", function() {
+              var issue = $(this).data('issue');
+              if(issue) {
+                alert("#{config.redmine}/issues/" + issue);
+              } else {
+                
+              }
+            });
+
             $("#content").height($(window).height());
             var height = $(window).height() - ($("#messages").offset().top + $("#message-input-container").height());
             $("#messages-container").height(height - 2);
@@ -75,22 +84,49 @@ html
             });
 
             var socket = io();
-            socket.emit('subscribe', "#{slug}");
+            socket.emit('subscribe', {
+              room: "#{slug}",
+              name: "Adam Meily"
+            });
+
+            /* TODO
+             *  - author colors
+             *  - author links
+             *  - receive existing messages
+             *  - prompt for user name
+             */
 
             socket.on('message', function(msg) {
               $("#messages").append(
                 $("<tr>").append(
-                  $("<td class='timestamp-col'>").text(
+                  $("<td class='timestamp'>").text(
                     '[' + moment.unix(msg.timestamp).local().format("HH:mm:ss") + ']'
                   )
                 ).append(
-                  $("<td class='author-col'>").text(
+                  $("<td class='author'>").text(
                     msg.author
                   )
                 ).append(
-                  $("<td class='message-col'>").html(msg.html)
+                  $("<td class='message'>").html(msg.html)
                 )
               );
+            }).on('join', function(name) {
+              $("#messages").append(
+                $("<tr class='system'>").append(
+                  $("<td class='timestamp'>").text(
+                    '[' + moment().format("HH:mm:ss") + ']'
+                  )
+                ).append(
+                  $("<td class='author'>System</td>")
+                ).append(
+                  $("<td class='message'>").text(
+                    ">>>>>>>> " + name + " has joined the collective <<<<<<<<"
+                  )
+                )
+              );
+              $("#users").append($("<li class='list-group-item'>").text(name));
+            }).on('leave', function(name) {
+              alert(name + " has left the chat");
             });
 
         });
