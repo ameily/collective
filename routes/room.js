@@ -8,6 +8,7 @@ var router = express.Router();
 
 var slugMap = {};
 var io = null;
+var roomInfo = {};
 
 function slugify(text) {
     return text.toString().toLowerCase()
@@ -16,6 +17,16 @@ function slugify(text) {
       .replace(/\-\-+/g, '-')      // Replace multiple - with single -
       .replace(/^-+/, '')          // Trim - from start of text
       .replace(/-+$/, '');         // Trim - from end of text
+}
+
+function shouldTriggerJoin(data) {
+  var info = data.romm in roomInfo ? roomInfo[data.room] : (roomInfo[data.room] = { users: [] });
+  if(data.user in info.users) {
+    return false;
+  } else {
+    info.users.push(data.user);
+    return true;
+  }
 }
 
 /* GET home page. */
@@ -51,9 +62,6 @@ module.exports = function(attrs) {
   _.each(config.rooms, function(room) {
       slug = slugify(room.name);
       slugMap[slug] = room;
-      //io.of('/' + slug).on('connection', function(socket) {
-      //  console.log("New Connection: " + slug);
-      //});
   });
 
   io.on('connection', function(socket) {
@@ -61,7 +69,14 @@ module.exports = function(attrs) {
     socket.on('subscribe', function(data) {
       socket.join(data.room);
       socket.name = data.name;
-      io.sockets.in(data.room).emit('join', data.name);
+      if(shouldTriggerJoin(data)) {
+        io.sockets.in(data.room).emit('join', data.name);
+      }
+      /*
+       * TODO
+       *  - send current user list
+       *  - send previous messages
+       */
     }).on('disconnect', function() {
       console.log('leave');
       _.each(socket.rooms, function(room) {
