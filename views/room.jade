@@ -11,6 +11,8 @@ html
     script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")
     script(src="/socket.io/socket.io.js")
     script(src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js")
+    script(src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore.js")
+    script(src="/javascripts/chat.js")
 
   body
     div#content.container-fluid
@@ -20,9 +22,7 @@ html
 
       div.row
         div.col-md-8
-          div#messages-container
-            table#messages-table
-              tbody#messages
+          div.chat-pane
 
           div.row#message-input-container
             div &nbsp;
@@ -49,7 +49,7 @@ html
 
     script.
         $(document).ready(function() {
-            $("#messages").on('click', "a.issue", function() {
+            $(".chat-pane").on('click', "a.issue", function() {
               var issue = $(this).data('issue');
               if(issue) {
                 alert("#{config.redmine}/issues/" + issue);
@@ -59,8 +59,8 @@ html
             });
 
             $("#content").height($(window).height());
-            var height = $(window).height() - ($("#messages").offset().top + $("#message-input-container").height());
-            $("#messages-container").height(height - 2);
+            var height = $(window).height() - ($(".chat-pane").offset().top + $("#message-input-container").height());
+            $(".chat-pane").height(height - 2);
 
             $("#message-input").keypress(function(e) {
                 if(e.which == 13 && !(e.ctrlKey || e.shiftKey)) {
@@ -96,37 +96,10 @@ html
              *  - prompt for user name
              */
 
-            socket.on('message', function(msg) {
-              $("#messages").append(
-                $("<tr>").append(
-                  $("<td class='timestamp'>").text(
-                    '[' + moment.unix(msg.timestamp).local().format("HH:mm:ss") + ']'
-                  )
-                ).append(
-                  $("<td class='author'>").text(
-                    msg.author
-                  )
-                ).append(
-                  $("<td class='message'>").html(msg.html)
-                )
-              );
-            }).on('join', function(name) {
-              $("#messages").append(
-                $("<tr class='system'>").append(
-                  $("<td class='timestamp'>").text(
-                    '[' + moment().format("HH:mm:ss") + ']'
-                  )
-                ).append(
-                  $("<td class='author'>System</td>")
-                ).append(
-                  $("<td class='message'>").text(
-                    ">>>>>>>> " + name + " has joined the collective <<<<<<<<"
-                  )
-                )
-              );
-              $("#users").append($("<li class='list-group-item'>").text(name));
-            }).on('leave', function(name) {
-              alert(name + " has left the chat");
+            var chat = new ChatPane({
+              socket: socket,
+              $root: $(".chat-pane"),
+              userName: "Adam Meily"
             });
 
         });

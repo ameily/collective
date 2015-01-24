@@ -9,50 +9,48 @@
     color: #222;
 }
 
-#messages td.timestamp {
+.chat-pane {
+    overflow-y: auto;
+    border: 1px solid #aaa;
+}
+
+.chat-pane > table {
+    width: 100%;
+}
+
+.chat-pane td .timestamp {
     width: 12ch;
     vertical-align: top;
 }
 
-#messages td.author {
+.chat-pane td .author {
     width: 12ch;
     vertical-align: top;
 }
 
-#messages td.message {
+.chat-pane  td .message {
     border-left: 1px solid #aaa;
     padding-left: 10px;
     vertical-align: top;
 }
 
-#messages td.message p {
+.chat-pane td .message p {
     padding: 0;
     margin: 0;
 }
 
-#messages tr.system td.message, #messages tr.system td.author {
-    font-weight: bold;
+.author-self {
+    color: #D45554;
 }
 
-
-#messages-table {
-    width: 100%;
+.author-system, .message-system {
+    font-weight: bold;
 }
 
 #messages tr:hover {
     background-color: #eee;
 }
 
-#messages {
-    width: 100%;
-}
-
-#messages-container {
-    overflow-y: auto;
-    border: 1px solid #aaa;
-}
-
 #sidebar-container {
     overflow-y: auto;
-    
 }
