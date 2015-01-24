@@ -9,7 +9,7 @@ ChatPane = function(options) {
 
     this.$table = $("<table>");
     this.$tbody = $("<tbody>");
-    this.$table.addClass('chat-pane');
+    //this.$table.addClass('chat-pane');
     this.$root.append(this.$table.append(this.$tbody));
 
     this.onUserMessage = function(msg) {
@@ -40,24 +40,29 @@ ChatPane = function(options) {
 
     this._renderMessage = function(data) {
         var authorHtml, messageHtml = data.messageHtml;
+        var timestampHtml  = "[" + data.timestamp.format("HH:mm:ss") + "]";
 
         if(data.authorClass == 'system') {
-            authorHtml = "<span class='author author-system'>System</span>";
-            messageHtml = "&gt;&gt;&gt;&gt;&gt;&gt; " +
+            authorHtml = "<span class='author-system'>System</span>";
+            messageHtml = "<div class='message-system'>" +
+                          "&gt;&gt;&gt;&gt;&gt;&gt; " +
                           data.messageHtml +
-                          " &lt;&lt;&lt;&lt;&lt;&lt;";
+                          " &lt;&lt;&lt;&lt;&lt;&lt;" +
+                          "</div>";
         } else if(data.authorClass == 'self') {
-            authorHtml = $("<a class='author author-user' href='#'>")
-                .attr('data-user', data.author)
-                .text(data.author)
-                .html();
+            authorHtml = $("<span class='author-self'>")
+                .text(data.author);
         } else {
-            authorHtml = $("<span class='author author-self'>")
-                .text(msg.author)
-                .html();
+            authorHtml = $("<a class='author-user' href='#'>")
+                .attr('data-user', data.author)
+                .text(data.author);
         }
 
         this.$tbody.append(
+            $("<tr>")
+                .append($("<td class='timestamp'>").append(timestampHtml))
+                .append($("<td class='author'>").append(authorHtml))
+                .append($("<td class='message'>").append(messageHtml))
         );
     };
 
