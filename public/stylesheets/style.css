@@ -5,8 +5,7 @@
 
 .timestamp {
     font-family: monospace;
-    font-size: 90%;
-    color: #222;
+    color: #666;
 }
 
 .chat-pane {
@@ -18,23 +17,24 @@
     width: 100%;
 }
 
-.chat-pane td .timestamp {
-    width: 12ch;
+.chat-pane td {
     vertical-align: top;
 }
 
-.chat-pane td .author {
+.chat-pane td.timestamp {
     width: 12ch;
-    vertical-align: top;
 }
 
-.chat-pane  td .message {
+.chat-pane td.author {
+    width: 12ch;
+}
+
+.chat-pane  td.message {
     border-left: 1px solid #aaa;
     padding-left: 10px;
-    vertical-align: top;
 }
 
-.chat-pane td .message p {
+.chat-pane td.message p {
     padding: 0;
     margin: 0;
 }
@@ -47,8 +47,8 @@
     font-weight: bold;
 }
 
-#messages tr:hover {
-    background-color: #eee;
+.chat-pane tr:hover {
+    background-color: #efefef;
 }
 
 #sidebar-container {
