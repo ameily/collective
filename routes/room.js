@@ -32,18 +32,31 @@ function shouldTriggerJoin(data) {
     console.log("Found room");
     info = roomInfo[data.room];
   } else {
-    info = roomInfo[data.room] = { users: [] };
+    info = roomInfo[data.room] = { users: {} };
     console.log("Room not found");
   }
 
-  console.log("info: " + info.users.join(', '));
-
-  if(_.contains(info.users, data.name)) {
+  if(data.user in info.users) {
+    info.users[data.user] += 1;
     return false;
   } else {
-    info.users.push(data.name);
+    info.users[data.user] = 1;
     return true;
   }
+}
+
+function shouldTriggerLeave(data) {
+  if(data.room in roomInfo) {
+    var info = roomInfo[data.room];
+    if(data.user in info.users) {
+      var count = (info.users[data.user] -= 1);
+      if(count <= 0) {
+        delete info.users[data.user];
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /* GET home page. */
@@ -84,11 +97,17 @@ module.exports = function(attrs) {
   io.on('connection', function(socket) {
     console.log("New Connection");
     socket.on('subscribe', function(data) {
-      console.log("sub: " + data.room + " :: " + data.name);
+      console.log("sub: " + data.room + " :: " + data.user);
       socket.join(data.room);
-      socket.name = data.name;
+      socket.user = data.user;
+
+      if(!socket.roomNames) {
+        socket.roomNames = [];
+      }
+      socket.roomNames.push(data.room);
+
       if(shouldTriggerJoin(data)) {
-        io.sockets.in(data.room).emit('join', data.name);
+        io.sockets.in(data.room).emit('join', data.user);
       }
       /*
        * TODO
@@ -96,11 +115,17 @@ module.exports = function(attrs) {
        *  - send previous messages
        */
     }).on('disconnect', function() {
-      console.log('leave');
-      _.each(socket.rooms, function(room) {
-        console.log("left " + room);
-        io.sockets.in(room).emit('leave', socket.name);
-      });
+      if(!socket.roomNames) {
+        return;
+      }
+
+      console.log("disconnect: " + socket.roomNames.join(', '));
+        _.each(socket.roomNames, function(room) {
+          if(shouldTriggerLeave({ room: room, user: socket.user })) {
+            console.log(">>> leave");
+            io.sockets.in(room).emit('leave', socket.user);
+          }
+        });
     });
   });
   return router;
