@@ -19,12 +19,29 @@ function slugify(text) {
       .replace(/-+$/, '');         // Trim - from end of text
 }
 
+
 function shouldTriggerJoin(data) {
-  var info = data.romm in roomInfo ? roomInfo[data.room] : (roomInfo[data.room] = { users: [] });
-  if(data.user in info.users) {
+  /*
+   * TODO
+   *  - change data.name to data.user
+   *  - track number of user instances
+   */
+  //var info = data.room in roomInfo ? roomInfo[data.room] : (roomInfo[data.room] = { users: [] });
+  var info;
+  if(data.room in roomInfo) {
+    console.log("Found room");
+    info = roomInfo[data.room];
+  } else {
+    info = roomInfo[data.room] = { users: [] };
+    console.log("Room not found");
+  }
+
+  console.log("info: " + info.users.join(', '));
+
+  if(_.contains(info.users, data.name)) {
     return false;
   } else {
-    info.users.push(data.user);
+    info.users.push(data.name);
     return true;
   }
 }
@@ -67,6 +84,7 @@ module.exports = function(attrs) {
   io.on('connection', function(socket) {
     console.log("New Connection");
     socket.on('subscribe', function(data) {
+      console.log("sub: " + data.room + " :: " + data.name);
       socket.join(data.room);
       socket.name = data.name;
       if(shouldTriggerJoin(data)) {
