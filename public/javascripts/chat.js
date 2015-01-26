@@ -5,7 +5,7 @@ var ChatPane = null;
 ChatPane = function(options) {
     this.$root = options.$root;
     this.socket = options.socket;
-    this.userName = options.userName || "<unknown>";
+    this.user = options.user || "<unknown>";
 
     this.$table = $("<table>");
     this.$tbody = $("<tbody>");
@@ -14,7 +14,7 @@ ChatPane = function(options) {
 
     this.onUserMessage = function(msg) {
         this._renderMessage({
-            authorClass: msg.author == this.userName ? 'self' : 'user',
+            authorClass: msg.author == this.user ? 'self' : 'user',
             timestamp: moment.unix(msg.timestamp),
             author: msg.author,
             messageHtml: msg.html
