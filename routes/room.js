@@ -65,10 +65,23 @@ function shouldTriggerLeave(data) {
 
 function setupRoom(config) {
     var slug = slugify(config.name);
-    Rooms[slug] = {
+    var room = Rooms[slug] = {
         config: config,
-        users: {}
+        users: {},
+        alarms: []
     };
+
+    var now = moment.utc();
+    models.Alarm.find({ room: slug, target: { $gt: now.unix() } }).exec(function(err, docs) {
+        room.alarms = docs || [];
+        now = moment.utc().unix();
+        _.each(docs, function(doc) {
+            setTimeout(function() {
+                io.sockets.in(slug).emit('alarmTriggered', doc.toJSON());
+                room.alarms = _.without(room.alarms, doc);
+            }, (doc.target - now) * 1000);
+        });
+    });
 }
 
 
@@ -116,6 +129,10 @@ module.exports = function(attrs) {
             _.each(_.keys(Rooms[data.room].users), function(user) {
                 console.log("Join: " + user);
                 socket.emit('join', user, true);
+            });
+
+            _.each(Rooms[data.room].alarms, function(alarm) {
+                socket.emit('alarmCreated', alarm.toJSON(), true);
             });
 
             // Send previous messages
