@@ -21,8 +21,6 @@ exports.Download = mongoose.model('Download', {
 
 exports.Alarm = mongoose.model('Alarm', {
     room: String,
-    author: String,
-    created: Number,
     target: Number,
     name: String,
     category: String
