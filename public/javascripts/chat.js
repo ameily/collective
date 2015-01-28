@@ -13,6 +13,13 @@ ChatPane = function(options) {
     //this.$table.addClass('chat-pane');
     this.$root.append(this.$table.append(this.$tbody));
 
+    this.alertCatMap = {
+        danger: "text-danger",
+        warning: "text-warning",
+        info: "text-info",
+        generic: ""
+    };
+
     this.onUserMessage = function(msg) {
         this._renderMessage({
             authorClass: msg.author == this.user ? 'self' : 'user',
@@ -40,6 +47,21 @@ ChatPane = function(options) {
             authorClass: 'system',
             timestamp: moment(),
             messageHtml: $("<span>").text(name).html() + " has left the Collective"
+        });
+    };
+
+    this.onAlarmTriggered = function(alarm) {
+        var alrtCls;
+        if(alarm.category in this.alertCatMap) {
+            alrtCls = this.alertCatMap[alarm.category];
+        } else {
+            alrtCls = this.alertCatMap.generic;
+        }
+
+        this._renderMessage({
+            timestamp: moment(),
+            messageHtml: $("<span class='badge'>").text(alarm.name).addClass(alrtCls).html(),
+            authorClass: 'system'
         });
     };
 
@@ -71,11 +93,12 @@ ChatPane = function(options) {
         );
     };
 
-    _.bindAll(this, 'onUserMessage', 'onUserJoin', 'onUserLeave');
+    _.bindAll(this, 'onUserMessage', 'onUserJoin', 'onUserLeave', 'onAlarmTriggered');
 
     this.socket.on('message', this.onUserMessage)
         .on('join', this.onUserJoin)
-        .on('leave', this.onUserLeave);
+        .on('leave', this.onUserLeave)
+        .on('alarmTriggered', this.onAlarmTriggered);
 };
 
 jQuery.fn.extend({
