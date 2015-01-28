@@ -12,6 +12,13 @@ AlarmListPane = function(options) {
     this.socket = options.socket;
     this.alarms = { };
 
+    this.categoryMap = {
+        danger: "list-group-item-danger",
+        info: "list-group-item-info",
+        warning: 'list-group-item-warning',
+        generic: ''
+    };
+
     this.onAlarmTick = function() {
         var self = this;
         var now = moment.utc();
@@ -39,16 +46,22 @@ AlarmListPane = function(options) {
         return null;
     };
 
-    this.onAlarmCreate = function(options) {
+    this.onAlarmCreated = function(options) {
         var empty = _.isEmpty(this.alarms);
         var alarm = this.alarms[options.name] = {
             target: moment.unix(options.target),
             category: options.category || "info",
-            $el: $("<li class='list-group-item'>").text(options.name),
-            $diff: $("<span class='timestamp'>")
+            $el: $("<li class='list-group-item'>"),
+            $diff: $("<span class='badge monospace'>")
         };
 
-        alarm.$el.append('&nbsp;').append(alarm.$diff);
+        if(alarm.category in this.categoryMap) {
+            alarm.$el.addClass(this.categoryMap[alarm.category]);
+        } else {
+            alarm.$el.addClass(this.categoryMap.generic);
+        }
+
+        alarm.$el.append(alarm.$diff).append($("<span>").text(options.name));
         this.$list.append(alarm.$el);
 
         var diff = this.getDiffString(moment.utc(), alarm.target);
@@ -63,9 +76,9 @@ AlarmListPane = function(options) {
         }
     };
 
-    this.onAlarmDelete = function(name) {
-        if(name in this.alarms) {
-            var alarm = this.alarms[name];
+    this.onAlarmDelete = function(alarm) {
+        if(alarm.name in this.alarms) {
+            var alarm = this.alarms[alarm.name];
             alarm.$el.remove();
             delete this.alarms[name];
         }
@@ -73,7 +86,7 @@ AlarmListPane = function(options) {
 
     this.$list = $("<ul class='list-group'>");
     this.$root.append(
-        $("<div class='panel panel-danger'>").append(
+        $("<div class='panel panel-default'>").append(
             $("<div class='panel-heading'>").append(
                 $("<h3 class='panel-title'>Alarms</h3>")
             )
@@ -82,11 +95,11 @@ AlarmListPane = function(options) {
         )
     );
 
-    _.bindAll(this, 'onAlarmCreate', 'onAlarmTick', 'onAlarmDelete');
+    _.bindAll(this, 'onAlarmCreated', 'onAlarmTick', 'onAlarmDelete');
 
-    this.socket.on('alarmCreate', this.onAlarmCreate)
-        .on('alarmDelete', this.onAlarmDelete)
-        .on('alarmReached', this.onAlarmDelete);
+    this.socket.on('alarmCreated', this.onAlarmCreated)
+        .on('alarmDeleted', this.onAlarmDelete)
+        .on('alarmTriggered', this.onAlarmDelete);
 };
 
 })();
