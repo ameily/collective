@@ -27,6 +27,7 @@
 
 .chat-pane td.author {
     width: 12ch;
+    overflow-x: hidden;
 }
 
 .chat-pane  td.message {
@@ -39,11 +40,11 @@
     margin: 0;
 }
 
-.author-self {
+.user-self {
     color: #D45554;
 }
 
-.author-system, .message-system {
+.user-system, .message-system {
     font-weight: bold;
 }
 

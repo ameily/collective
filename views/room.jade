@@ -13,6 +13,7 @@ html
     script(src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js")
     script(src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore.js")
     script(src="/javascripts/chat.js")
+    script(src="/javascripts/user-list.js")
 
   body
     div#content.container-fluid
@@ -41,29 +42,66 @@ html
                 h3.panel-title Alarms
               ul#alarms.list-group
 
-            div.panel.panel-info
-              div.panel-heading
-                h3.panel-title Users
-              ul#users.list-group
+            div#users-container
 
+    div#login-dialog.modal(data-backdrop="static", data-keyboard="false")
+      div.modal-dialog.modal-lg
+        div.modal-content
+          div.modal-header
+            h4.modal-title Register
+          div.modal-body
+            div
+              div.form-gorup
+                label User Name
+                input#user-name-input.form-control(type='text')
+                p#login-help.help-block
+          div.modal-footer
+            button#login-btn.btn.btn-primary Login
 
     script.
+        var userName = null;
+
+        function addDynamicStyles() {
+          var selector = '.mention[data-mention="' + userName + '"]';
+          var hover = selector + ":hover, " +
+                      selector + ":visited, " +
+                      selector + ":active " +
+                      "{ text-decoration: none; cursor: default; }\n";
+          var base = selector + " { font-weight: bold; color: #D45554; }\n";
+          var $style = $('<style>'+base+hover+'</style>');
+          $("html > head").append($style);
+        }
+
+        function resizeUI() {
+          var windowHeight = $(window).height() - 10;
+          $("#content").height(windowHeight);
+          var height = windowHeight - ($(".chat-pane").offset().top + $("#message-input-container").height());
+          $(".chat-pane").height(height - 2);
+        }
+
         $(document).ready(function() {
-            $(".chat-pane").on('click', "a.issue", function() {
+            resizeUI();
+            $(window).resize(resizeUI)
+            $("#content").on('click', "a.issue", function() {
               var issue = $(this).data('issue');
               if(issue) {
-                alert("#{config.redmine}/issues/" + issue);
+                window.open("#{config.redmine}/issues/" + issue, '_blank');
               } else {
                 
               }
+              return false;
+            }).on('click', 'a.user', function() {
+              $("#message-input").insertAtCaret('@' + $(this).attr('data-user'));
+              return false;
+            }).on('click', 'a.mention', function() {
+              if($(this).attr('data-mention') != userName) {
+                $("#message-input").insertAtCaret('@' + $(this).attr('data-mention'));
+              }
+              return false;
             });
 
-            $("#content").height($(window).height());
-            var height = $(window).height() - ($(".chat-pane").offset().top + $("#message-input-container").height());
-            $(".chat-pane").height(height - 2);
-
             $("#message-input").keypress(function(e) {
-                if(e.which == 13 && !(e.ctrlKey || e.shiftKey)) {
+                if(e.which == 13 && !(e.ctrlKey || e.shiftKey) && userName) {
                     //TODO send
                     var text = $(this).val().trim();
                     if(text.length) {
@@ -71,7 +109,7 @@ html
                         method: 'POST',
                         dataType: 'json',
                         data: {
-                          author: "Adam Meily",
+                          author: userName,
                           text: text
                         }
                       });
@@ -83,24 +121,67 @@ html
                 }
             });
 
-            var socket = io();
-            socket.emit('subscribe', {
-              room: "#{slug}",
-              name: "Adam Meily"
+            $("#user-name-input").keypress(function(e) {
+              if(e.which == 13) {
+                e.preventDefault();
+                $("#login-btn").click();
+              }
             });
 
-            /* TODO
-             *  - author colors
-             *  - author links
-             *  - receive existing messages
-             *  - prompt for user name
-             */
+            $("#login-btn").click(function () {
+              userName = $("#user-name-input").val().trim();
+              if(userName.length < 4) {
+                $("#login-help").text("Username must be at least 4 characters long")
+                  .parent().addClass('has-error');
+                return false;
+              }
 
-            var chat = new ChatPane({
-              socket: socket,
-              $root: $(".chat-pane"),
-              userName: "Adam Meily"
+              if(userName.length > 10) {
+                $("#login-help").text("Username cannot be more than 10 characters long")
+                  .parent().addClass('has-error');
+                return false;
+              }
+
+              if(!userName.match(/^[a-zA-Z0-9\-_]+$/)) {
+                $("#login-help").text("Username may only contain letters, numbers, dash (-), and underscore (_)")
+                  .parent().addClass('has-error');
+                return false;
+              }
+
+              $("#login-dialog").modal('hide');
+
+              addDynamicStyles();
+
+              var socket = io();
+              socket.emit('subscribe', {
+                room: "#{slug}",
+                user: userName
+              });
+
+              /* TODO
+               *  - author colors
+               *  - author links
+               */
+
+              var chat = new ChatPane({
+                socket: socket,
+                $root: $(".chat-pane"),
+                user: userName
+              });
+
+              var userList = new UserListPane({
+                socket: socket,
+                $root: $("#users-container"),
+                user: userName
+              });
+
+              return false;
             });
+
+            $("#login-dialog").modal('show');
+            $("#user-name-input").focus();
+
+            
 
         });
 

@@ -6,9 +6,14 @@ var models = require('../models');
 var md = require('../markdown')
 var router = express.Router();
 
-var slugMap = {};
+
 var io = null;
-var roomInfo = {};
+
+
+var Rooms = {
+
+};
+
 
 function slugify(text) {
     return text.toString().toLowerCase()
@@ -21,87 +26,115 @@ function slugify(text) {
 
 
 function shouldTriggerJoin(data) {
-  /*
-   * TODO
-   *  - change data.name to data.user
-   *  - track number of user instances
-   */
-  //var info = data.room in roomInfo ? roomInfo[data.room] : (roomInfo[data.room] = { users: [] });
-  var info;
-  if(data.room in roomInfo) {
-    console.log("Found room");
-    info = roomInfo[data.room];
-  } else {
-    info = roomInfo[data.room] = { users: [] };
-    console.log("Room not found");
-  }
+    if(!(data.room in Rooms)) {
+        return false;
+    }
 
-  console.log("info: " + info.users.join(', '));
-
-  if(_.contains(info.users, data.name)) {
-    return false;
-  } else {
-    info.users.push(data.name);
-    return true;
-  }
+    var room = Rooms[data.room];
+    if(data.user in room.users) {
+        room.users[data.user] += 1;
+        return false;
+    } else {
+        room.users[data.user] = 1;
+        return true;
+    }
 }
+
+function shouldTriggerLeave(data) {
+    if(!(data.room in Rooms)) {
+        return false;
+    }
+
+    var room = Rooms[data.room];
+    var trigger;
+    if(data.user in room.users) {
+        if(room.users[data.user] == 1) {
+            delete room.users[data.user];
+            trigger = true;
+        } else {
+            room.users[data.user] -= 1;
+            trigger = false;
+        }
+    } else {
+        trigger = false;
+    }
+
+    return trigger;
+}
+
+
+function setupRoom(config) {
+    var slug = slugify(config.name);
+    Rooms[slug] = {
+        config: config,
+        users: {}
+    };
+}
+
 
 /* GET home page. */
 router.get('/:slug', function(req, res, next) {
     var slug = req.params.slug;
-  if(slug in slugMap) {
-    res.render('room', { room: slugMap[slug], slug: slug });
-  } else {
-    next();
-  }
+    if(slug in Rooms) {
+        res.render('room', {
+            room: Rooms[slug].config,
+            slug: slug
+        });
+    } else {
+        next();
+    }
 }).post('/:slug/message', function(req, res, next) {
-    console.log(">> New Message <<");
-    console.log("   Author: " + req.body.author);
-    console.log("   Text:   " + req.body.text);
+    var slug = req.params.slug;
     var msg = new models.Message({
         author: req.body.author,
         html: md.render(req.body.text),
-        room: req.params.slug,
+        room: slug,
         timestamp: moment().unix()
     });
 
-    console.log("   Html:  " + msg.html);
-    //io.of('/' + slug).emit('message', msg);
-    io.sockets.in(slug).emit('message', msg);
+    io.sockets.in(slug).emit('message', msg.toJSON());
 
     msg.save();
-
-    //TODO fire message
+    res.end();
 });
 
 module.exports = function(attrs) {
-  io = attrs.io;
-  _.each(config.rooms, function(room) {
-      slug = slugify(room.name);
-      slugMap[slug] = room;
-  });
+    io = attrs.io;
+    _.each(config.rooms, setupRoom);
 
-  io.on('connection', function(socket) {
-    console.log("New Connection");
-    socket.on('subscribe', function(data) {
-      console.log("sub: " + data.room + " :: " + data.name);
-      socket.join(data.room);
-      socket.name = data.name;
-      if(shouldTriggerJoin(data)) {
-        io.sockets.in(data.room).emit('join', data.name);
-      }
-      /*
-       * TODO
-       *  - send current user list
-       *  - send previous messages
-       */
-    }).on('disconnect', function() {
-      console.log('leave');
-      _.each(socket.rooms, function(room) {
-        console.log("left " + room);
-        io.sockets.in(room).emit('leave', socket.name);
-      });
+    io.on('connection', function(socket) {
+        socket.on('subscribe', function(data) {
+            // User joined room
+            socket.user = data.user;
+            socket.room = data.room;
+
+            if(shouldTriggerJoin(data)) {
+                io.sockets.in(data.room).emit('join', data.user);
+            }
+
+            // send current user list
+            _.each(_.keys(Rooms[data.room].users), function(user) {
+                console.log("Join: " + user);
+                socket.emit('join', user, true);
+            });
+
+            // Send previous messages
+            models.Message.find({ room: data.room }).sort({ _id: 1 }).exec(function(err, docs) {
+                _.each(docs, function(doc) { 
+                    socket.emit('message', doc.toJSON());
+                });
+                socket.join(data.room);
+            });
+        }).on('disconnect', function() {
+            if(!socket.room) {
+                return;
+            }
+            
+            if(shouldTriggerLeave({ room: socket.room, user: socket.user })) {
+                io.sockets.in(socket.room).emit('leave', socket.user);
+            }
+        });
     });
-  });
-  return router;
+
+    return router;
 };
