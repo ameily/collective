@@ -12,34 +12,29 @@ AlarmListPane = function(options) {
     this.socket = options.socket;
     this.alarms = { };
 
+    this.categoryMap = {
+        danger: "list-group-item-danger",
+        info: "list-group-item-info",
+        warning: 'list-group-item-warning',
+        generic: ''
+    };
+
     this.onAlarmTick = function() {
-        va self = this;
+        var self = this;
         var now = moment.utc();
-        var remove = [];
         _.each(this.alarms, function(alarm) {
             var str = self.getDiffString(now, alarm.target);
             if(str) {
                 alarm.$diff.text(str);
             } else {
-                //TODO alarm has been hit
-                remove.push(alarm._id);
+                alarm.$diff.text("0:00:00:00");
             }
         });
-
-        _.each(remove, function(id) {
-            //TODO
-            var alarm = self.alarms[id];
-            alarm.$el.remove();
-            delete self.alarms[id];
-        });
-
-        if(this.alarms.length) {
-            setTimeout(this.onAlarmTick, 1000);
-        }
+        setTimeout(this.onAlarmTick, 1000);
     };
 
     this.getDiffString = function(now, target) {
-        var diff = alarm.target.diff(now);
+        var diff = target.diff(now);
         if(diff > 0) {
             var duration = moment.duration(diff);
             var str = duration.days().toString() + ":" +
@@ -51,33 +46,47 @@ AlarmListPane = function(options) {
         return null;
     };
 
-    this.onAlarmCreate = function(options) {
-        var alarm = this.alarms[options.id] = {
-            target: options.target,
+    this.onAlarmCreated = function(options) {
+        var empty = _.isEmpty(this.alarms);
+        var alarm = this.alarms[options.name] = {
+            target: moment.unix(options.target),
             category: options.category || "info",
-            $el: $("<li class='list-group-item'>").text(options.name),
-            $diff: $("<span class='timestamp'>")
+            $el: $("<li class='list-group-item'>"),
+            $diff: $("<span class='badge monospace'>")
         };
 
-        alarm.$el.append('&nbsp;').append(alarm.$diff));
+        if(alarm.category in this.categoryMap) {
+            alarm.$el.addClass(this.categoryMap[alarm.category]);
+        } else {
+            alarm.$el.addClass(this.categoryMap.generic);
+        }
+
+        alarm.$el.append(alarm.$diff).append($("<span>").text(options.name));
         this.$list.append(alarm.$el);
 
-        if(this.alarms.length == 1) {
+        var diff = this.getDiffString(moment.utc(), alarm.target);
+        if(diff) {
+            alarm.$diff.text(diff);
+        } else {
+            alarm.$diff.text("0:00:00:00");
+        }
+
+        if(empty) {
             setTimeout(this.onAlarmTick, 1000);
         }
     };
 
-    this.onAlarmDelete = function(id) {
-        if(id in this.alarms) {
-            var alarm = this.alarms[id];
-            delete this.alarms[id];
+    this.onAlarmDelete = function(alarm) {
+        if(alarm.name in this.alarms) {
+            var alarm = this.alarms[alarm.name];
             alarm.$el.remove();
+            delete this.alarms[name];
         }
     };
 
     this.$list = $("<ul class='list-group'>");
     this.$root.append(
-        $("<div class='panel panel-danger'>").append(
+        $("<div class='panel panel-default'>").append(
             $("<div class='panel-heading'>").append(
                 $("<h3 class='panel-title'>Alarms</h3>")
             )
@@ -86,7 +95,11 @@ AlarmListPane = function(options) {
         )
     );
 
-    _.bindAll(this, 'onAlarmCreate', 'onAlarmTick', 'onAlarmDelete');
+    _.bindAll(this, 'onAlarmCreated', 'onAlarmTick', 'onAlarmDelete');
+
+    this.socket.on('alarmCreated', this.onAlarmCreated)
+        .on('alarmDeleted', this.onAlarmDelete)
+        .on('alarmTriggered', this.onAlarmDelete);
 };
 
 })();
