@@ -14,6 +14,7 @@ html
     script(src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore.js")
     script(src="/javascripts/chat.js")
     script(src="/javascripts/user-list.js")
+    script(src="/javascripts/alarms.js")
 
   body
     div#content.container-fluid
@@ -37,10 +38,7 @@ html
                 h3.panel-title Downloads
               ul#downloads.list-group
 
-            div.panel.panel-default
-              div.panel-heading
-                h3.panel-title Alarms
-              ul#alarms.list-group
+            div#alarms-container
 
             div#users-container
 
@@ -172,6 +170,11 @@ html
                 socket: socket,
                 $root: $("#users-container"),
                 user: userName
+              });
+
+              var alarms = new AlarmListPane({
+                socket: socket,
+                $root: $("#alarms-container")
               });
 
               return false;

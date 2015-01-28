@@ -13,33 +13,21 @@ AlarmListPane = function(options) {
     this.alarms = { };
 
     this.onAlarmTick = function() {
-        va self = this;
+        var self = this;
         var now = moment.utc();
-        var remove = [];
         _.each(this.alarms, function(alarm) {
             var str = self.getDiffString(now, alarm.target);
             if(str) {
                 alarm.$diff.text(str);
             } else {
-                //TODO alarm has been hit
-                remove.push(alarm._id);
+                alarm.$diff.text("0:00:00:00");
             }
         });
-
-        _.each(remove, function(id) {
-            //TODO
-            var alarm = self.alarms[id];
-            alarm.$el.remove();
-            delete self.alarms[id];
-        });
-
-        if(this.alarms.length) {
-            setTimeout(this.onAlarmTick, 1000);
-        }
+        setTimeout(this.onAlarmTick, 1000);
     };
 
     this.getDiffString = function(now, target) {
-        var diff = alarm.target.diff(now);
+        var diff = target.diff(now);
         if(diff > 0) {
             var duration = moment.duration(diff);
             var str = duration.days().toString() + ":" +
@@ -52,26 +40,34 @@ AlarmListPane = function(options) {
     };
 
     this.onAlarmCreate = function(options) {
-        var alarm = this.alarms[options.id] = {
-            target: options.target,
+        var empty = _.isEmpty(this.alarms);
+        var alarm = this.alarms[options.name] = {
+            target: moment.unix(options.target),
             category: options.category || "info",
             $el: $("<li class='list-group-item'>").text(options.name),
             $diff: $("<span class='timestamp'>")
         };
 
-        alarm.$el.append('&nbsp;').append(alarm.$diff));
+        alarm.$el.append('&nbsp;').append(alarm.$diff);
         this.$list.append(alarm.$el);
 
-        if(this.alarms.length == 1) {
+        var diff = this.getDiffString(moment.utc(), alarm.target);
+        if(diff) {
+            alarm.$diff.text(diff);
+        } else {
+            alarm.$diff.text("0:00:00:00");
+        }
+
+        if(empty) {
             setTimeout(this.onAlarmTick, 1000);
         }
     };
 
-    this.onAlarmDelete = function(id) {
-        if(id in this.alarms) {
-            var alarm = this.alarms[id];
-            delete this.alarms[id];
+    this.onAlarmDelete = function(name) {
+        if(name in this.alarms) {
+            var alarm = this.alarms[name];
             alarm.$el.remove();
+            delete this.alarms[name];
         }
     };
 
@@ -87,6 +83,10 @@ AlarmListPane = function(options) {
     );
 
     _.bindAll(this, 'onAlarmCreate', 'onAlarmTick', 'onAlarmDelete');
+
+    this.socket.on('alarmCreate', this.onAlarmCreate)
+        .on('alarmDelete', this.onAlarmDelete)
+        .on('alarmReached', this.onAlarmDelete);
 };
 
 })();
