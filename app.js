@@ -22,7 +22,7 @@ var room = require('./routes/room')({
 
 
 
-//mongoose.connect(config.db.uri);
+mongoose.connect(config.db.uri);
 
 
 
