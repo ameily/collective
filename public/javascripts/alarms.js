@@ -16,6 +16,7 @@ AlarmListPane = function(options) {
         danger: "list-group-item-danger",
         info: "list-group-item-info",
         warning: 'list-group-item-warning',
+        success: 'list-group-item-success',
         generic: ''
     };
 
