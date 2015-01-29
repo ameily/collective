@@ -14,9 +14,10 @@ ChatPane = function(options) {
     this.$root.append(this.$table.append(this.$tbody));
 
     this.alertCatMap = {
-        danger: "text-danger",
-        warning: "text-warning",
-        info: "text-info",
+        danger: "text-danger bg-danger",
+        warning: "text-warning bg-warning",
+        info: "text-info bg-info",
+        success: "text-success bg-success",
         generic: ""
     };
 
@@ -37,7 +38,9 @@ ChatPane = function(options) {
         this._renderMessage({
             timestamp: moment(),
             //TODO change to author link
-            messageHtml: $("<span>").text(name).html() + " has joined the Collective ",
+            messageHtml: "<div class='text-center'>&lt;&lt;&lt;&lt;&lt;&lt;&lt; " +
+                         $("<span>").text(name).html() + " has joined the Collective " +
+                         "&gt;&gt;&gt;&gt;&gt;&gt;&gt;</div>",
             authorClass: 'system'
         });
     };
@@ -46,21 +49,30 @@ ChatPane = function(options) {
         this._renderMessage({
             authorClass: 'system',
             timestamp: moment(),
-            messageHtml: $("<span>").text(name).html() + " has left the Collective"
+            messageHtml: "<div class='text-center'>&lt;&lt;&lt;&lt;&lt;&lt;&lt; " +
+                         $("<span>").text(name).html() + " has left the Collective " +
+                         "&gt;&gt;&gt;&gt;&gt;&gt;&gt;</div>"
         });
     };
 
     this.onAlarmTriggered = function(alarm) {
-        var alrtCls;
+        var cls;
         if(alarm.category in this.alertCatMap) {
-            alrtCls = this.alertCatMap[alarm.category];
+            cls = this.alertCatMap[alarm.category];
         } else {
-            alrtCls = this.alertCatMap.generic;
+            cls = this.alertCatMap.generic;
         }
+
+        var msgHtml = $("<span>").append(
+            $("<h2 class='text-center alarm'>").addClass(cls).append(
+                $("<span class='glyphicon glyphicon-time'>")
+            ).append("&nbsp;").append(alarm.name)
+        ).html();
+        
 
         this._renderMessage({
             timestamp: moment(),
-            messageHtml: $("<span class='badge'>").text(alarm.name).addClass(alrtCls).html(),
+            messageHtml: msgHtml,
             authorClass: 'system'
         });
     };
@@ -72,9 +84,7 @@ ChatPane = function(options) {
         if(data.authorClass == 'system') {
             authorHtml = "<span class='user-system'>System</span>";
             messageHtml = "<div class='message-system'>" +
-                          "&gt;&gt;&gt;&gt;&gt;&gt; " +
                           data.messageHtml +
-                          " &lt;&lt;&lt;&lt;&lt;&lt;" +
                           "</div>";
         } else if(data.authorClass == 'self') {
             authorHtml = $("<span class='user-self'>")
@@ -85,12 +95,21 @@ ChatPane = function(options) {
                 .text(data.author);
         }
 
+        var scroll = data.authorClass == 'self';
+        if(!scroll && (this.$root.prop("scrollHeight") - this.$root.scrollTop()) == this.$root.innerHeight()) {
+            scroll = true;
+        }
+
         this.$tbody.append(
             $("<tr>")
                 .append($("<td class='timestamp'>").append(timestampHtml))
                 .append($("<td class='author'>").append(authorHtml))
                 .append($("<td class='message'>").append(messageHtml))
         );
+
+        if(scroll) {
+            this.$root.scrollTop(this.$root.prop("scrollHeight"));
+        }
     };
 
     _.bindAll(this, 'onUserMessage', 'onUserJoin', 'onUserLeave', 'onAlarmTriggered');
