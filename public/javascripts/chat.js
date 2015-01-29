@@ -64,17 +64,21 @@ ChatPane = function(options) {
         }
 
         var msgHtml = $("<span>").append(
-            $("<h2 class='text-center alarm'>").addClass(cls).append(
-                $("<span class='glyphicon glyphicon-time'>")
-            ).append("&nbsp;").append(alarm.name)
+            $("<h2 class='text-center alarm'>").addClass(cls).text(alarm.name)
         ).html();
-        
 
         this._renderMessage({
             timestamp: moment(),
             messageHtml: msgHtml,
             authorClass: 'system'
         });
+    };
+
+    this.shouldScroll = function() {
+        var diff = (this.$root.prop("scrollHeight") - this.$root.scrollTop()) - this.$root.innerHeight();
+        if(diff <= 10 && diff >= -10) {
+            return true;
+        }
     };
 
     this._renderMessage = function(data) {
@@ -95,10 +99,7 @@ ChatPane = function(options) {
                 .text(data.author);
         }
 
-        var scroll = data.authorClass == 'self';
-        if(!scroll && (this.$root.prop("scrollHeight") - this.$root.scrollTop()) == this.$root.innerHeight()) {
-            scroll = true;
-        }
+        var scroll = data.authorClass == 'self' || this.shouldScroll();
 
         this.$tbody.append(
             $("<tr>")
