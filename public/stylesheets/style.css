@@ -30,7 +30,7 @@
     overflow-x: hidden;
 }
 
-.chat-pane  td.message {
+.chat-pane td.message {
     border-left: 1px solid #aaa;
     padding-left: 10px;
 }
@@ -38,6 +38,19 @@
 .chat-pane td.message p {
     padding: 0;
     margin: 0;
+}
+
+.chat-pane .alarm {
+    margin: 0;
+    border-top: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+}
+
+td.message > h1, td.message > h2, td.message > h3, td.message > h4, td.message > h5, td.message > h6 {
+    font-weight: bold;
+    font-size: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 .user-self {
@@ -49,7 +62,7 @@
 }
 
 .chat-pane tr:hover {
-    background-color: #efefef;
+    background-color: #f2f2f2;
 }
 
 #sidebar-container {
