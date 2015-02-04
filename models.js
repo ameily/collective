@@ -10,7 +10,7 @@ exports.Message = mongoose.model('Message', {
 });
 
 
-exports.Download = mongoose.model('Download', {
+exports.Upload = mongoose.model('Upload', {
     room: String,
     author: String,
     timestamp: Number,

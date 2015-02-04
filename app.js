@@ -1,5 +1,6 @@
 var _ = require('underscore');
 var express = require('express');
+var multer  = require('multer');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
@@ -15,14 +16,15 @@ var app = express();
 var server = http.createServer(app);
 var io = require('socket.io')(server);
 
-var routes = require('./routes/index');
-var room = require('./routes/room')({
-    io: io
-});
-
-
 
 mongoose.connect(config.db.uri);
+
+var routes = require('./routes/index');
+var room = require('./routes/room')({
+    io: io,
+    db: mongoose.connection.db
+});
+
 
 
 
@@ -44,6 +46,11 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+app.use(multer({
+    dest: '/tmp'
+}));
+
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 

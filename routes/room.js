@@ -8,6 +8,7 @@ var router = express.Router();
 
 
 var io = null;
+var db = null;
 
 
 var Rooms = {
@@ -111,8 +112,36 @@ router.get('/:slug', function(req, res, next) {
     res.end();
 });
 
+router.get('/:room/upload', function(req, res, next) {
+    res.render('upload', {
+        slug: req.params.room
+    });
+}).post('/:room/upload', function(req, res, next) {
+    var room = req.params.slug;
+    var fileId = new ObjectID();
+    var store = new GridStore(db, fileId, 'w', { root: 'fs' });
+    store.writeFile(req.files.upload.path, function(err, fileInfo) {
+        var upload = new models.Upload({
+            author: req.body.author || null,
+            room: room,
+            description: req.body.description || null,
+            name: req.files.upload.originalname,
+            timestamp: moment().unix(),
+            file_id: fileId
+        });
+
+        upload.save(function() {
+            io.sockets.in(room).emit('upload', this.toJSON());
+        });
+    });
+
+    res.end();
+});
+
+
 module.exports = function(attrs) {
     io = attrs.io;
+    gridfs = attrs.gridfs;
     _.each(config.rooms, setupRoom);
 
     io.on('connection', function(socket) {
